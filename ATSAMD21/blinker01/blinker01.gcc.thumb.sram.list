@@ -7,7 +7,7 @@ Disassembly of section .text:
 20000000 <_start>:
 20000000:	4802      	ldr	r0, [pc, #8]	; (2000000c <stacktop>)
 20000002:	4685      	mov	sp, r0
-20000004:	f000 f80c 	bl	20000020 <notmain>
+20000004:	f000 f812 	bl	2000002c <notmain>
 20000008:	e7ff      	b.n	2000000a <hang>
 
 2000000a <hang>:
@@ -16,79 +16,91 @@ Disassembly of section .text:
 2000000c <stacktop>:
 2000000c:	20001000 	andcs	r1, r0, r0
 
-20000010 <PUT16>:
-20000010:	8001      	strh	r1, [r0, #0]
+20000010 <PUT8>:
+20000010:	7001      	strb	r1, [r0, #0]
 20000012:	4770      	bx	lr
 
-20000014 <PUT32>:
-20000014:	6001      	str	r1, [r0, #0]
+20000014 <PUT16>:
+20000014:	8001      	strh	r1, [r0, #0]
 20000016:	4770      	bx	lr
 
-20000018 <GET32>:
-20000018:	6800      	ldr	r0, [r0, #0]
+20000018 <PUT32>:
+20000018:	6001      	str	r1, [r0, #0]
 2000001a:	4770      	bx	lr
 
-2000001c <dummy>:
-2000001c:	4770      	bx	lr
-2000001e:	46c0      	nop			; (mov r8, r8)
+2000001c <GET8>:
+2000001c:	7800      	ldrb	r0, [r0, #0]
+2000001e:	4770      	bx	lr
 
-20000020 <notmain>:
-20000020:	2180      	movs	r1, #128	; 0x80
-20000022:	b570      	push	{r4, r5, r6, lr}
-20000024:	0289      	lsls	r1, r1, #10
-20000026:	481c      	ldr	r0, [pc, #112]	; (20000098 <notmain+0x78>)
-20000028:	f7ff fff4 	bl	20000014 <PUT32>
+20000020 <GET16>:
+20000020:	8800      	ldrh	r0, [r0, #0]
+20000022:	4770      	bx	lr
+
+20000024 <GET32>:
+20000024:	6800      	ldr	r0, [r0, #0]
+20000026:	4770      	bx	lr
+
+20000028 <dummy>:
+20000028:	4770      	bx	lr
+2000002a:	46c0      	nop			; (mov r8, r8)
+
+2000002c <notmain>:
 2000002c:	2180      	movs	r1, #128	; 0x80
-2000002e:	481a      	ldr	r0, [pc, #104]	; (20000098 <notmain+0x78>)
-20000030:	0509      	lsls	r1, r1, #20
-20000032:	f7ff ffef 	bl	20000014 <PUT32>
-20000036:	2108      	movs	r1, #8
-20000038:	4818      	ldr	r0, [pc, #96]	; (2000009c <notmain+0x7c>)
-2000003a:	f7ff ffeb 	bl	20000014 <PUT32>
-2000003e:	2180      	movs	r1, #128	; 0x80
-20000040:	4817      	ldr	r0, [pc, #92]	; (200000a0 <notmain+0x80>)
-20000042:	0289      	lsls	r1, r1, #10
-20000044:	f7ff ffe6 	bl	20000014 <PUT32>
-20000048:	2180      	movs	r1, #128	; 0x80
-2000004a:	4815      	ldr	r0, [pc, #84]	; (200000a0 <notmain+0x80>)
-2000004c:	0509      	lsls	r1, r1, #20
-2000004e:	f7ff ffe1 	bl	20000014 <PUT32>
-20000052:	2108      	movs	r1, #8
-20000054:	4813      	ldr	r0, [pc, #76]	; (200000a4 <notmain+0x84>)
-20000056:	f7ff ffdd 	bl	20000014 <PUT32>
-2000005a:	2400      	movs	r4, #0
-2000005c:	4d12      	ldr	r5, [pc, #72]	; (200000a8 <notmain+0x88>)
-2000005e:	0020      	movs	r0, r4
-20000060:	3401      	adds	r4, #1
-20000062:	f7ff ffdb 	bl	2000001c <dummy>
-20000066:	42ac      	cmp	r4, r5
-20000068:	d1f9      	bne.n	2000005e <notmain+0x3e>
-2000006a:	2180      	movs	r1, #128	; 0x80
-2000006c:	480f      	ldr	r0, [pc, #60]	; (200000ac <notmain+0x8c>)
-2000006e:	0289      	lsls	r1, r1, #10
-20000070:	f7ff ffd0 	bl	20000014 <PUT32>
-20000074:	2180      	movs	r1, #128	; 0x80
-20000076:	480d      	ldr	r0, [pc, #52]	; (200000ac <notmain+0x8c>)
-20000078:	0509      	lsls	r1, r1, #20
-2000007a:	f7ff ffcb 	bl	20000014 <PUT32>
-2000007e:	2108      	movs	r1, #8
-20000080:	480b      	ldr	r0, [pc, #44]	; (200000b0 <notmain+0x90>)
-20000082:	f7ff ffc7 	bl	20000014 <PUT32>
-20000086:	2400      	movs	r4, #0
-20000088:	4d07      	ldr	r5, [pc, #28]	; (200000a8 <notmain+0x88>)
-2000008a:	0020      	movs	r0, r4
-2000008c:	3401      	adds	r4, #1
-2000008e:	f7ff ffc5 	bl	2000001c <dummy>
-20000092:	42ac      	cmp	r4, r5
-20000094:	d1f9      	bne.n	2000008a <notmain+0x6a>
-20000096:	e7d2      	b.n	2000003e <notmain+0x1e>
-20000098:	41004408 	tstmi	r0, r8, lsl #8
-2000009c:	41004488 	smlabbmi	r0, r8, r4, r4
-200000a0:	41004418 	tstmi	r0, r8, lsl r4
-200000a4:	41004498 			; <UNDEFINED> instruction: 0x41004498
-200000a8:	00004e20 	andeq	r4, r0, r0, lsr #28
-200000ac:	41004414 	tstmi	r0, r4, lsl r4
-200000b0:	41004494 			; <UNDEFINED> instruction: 0x41004494
+2000002e:	b570      	push	{r4, r5, r6, lr}
+20000030:	0289      	lsls	r1, r1, #10
+20000032:	481c      	ldr	r0, [pc, #112]	; (200000a4 <notmain+0x78>)
+20000034:	f7ff fff0 	bl	20000018 <PUT32>
+20000038:	2180      	movs	r1, #128	; 0x80
+2000003a:	481a      	ldr	r0, [pc, #104]	; (200000a4 <notmain+0x78>)
+2000003c:	0509      	lsls	r1, r1, #20
+2000003e:	f7ff ffeb 	bl	20000018 <PUT32>
+20000042:	2108      	movs	r1, #8
+20000044:	4818      	ldr	r0, [pc, #96]	; (200000a8 <notmain+0x7c>)
+20000046:	f7ff ffe7 	bl	20000018 <PUT32>
+2000004a:	2180      	movs	r1, #128	; 0x80
+2000004c:	4817      	ldr	r0, [pc, #92]	; (200000ac <notmain+0x80>)
+2000004e:	0289      	lsls	r1, r1, #10
+20000050:	f7ff ffe2 	bl	20000018 <PUT32>
+20000054:	2180      	movs	r1, #128	; 0x80
+20000056:	4815      	ldr	r0, [pc, #84]	; (200000ac <notmain+0x80>)
+20000058:	0509      	lsls	r1, r1, #20
+2000005a:	f7ff ffdd 	bl	20000018 <PUT32>
+2000005e:	2108      	movs	r1, #8
+20000060:	4813      	ldr	r0, [pc, #76]	; (200000b0 <notmain+0x84>)
+20000062:	f7ff ffd9 	bl	20000018 <PUT32>
+20000066:	2400      	movs	r4, #0
+20000068:	4d12      	ldr	r5, [pc, #72]	; (200000b4 <notmain+0x88>)
+2000006a:	0020      	movs	r0, r4
+2000006c:	3401      	adds	r4, #1
+2000006e:	f7ff ffdb 	bl	20000028 <dummy>
+20000072:	42ac      	cmp	r4, r5
+20000074:	d1f9      	bne.n	2000006a <notmain+0x3e>
+20000076:	2180      	movs	r1, #128	; 0x80
+20000078:	480f      	ldr	r0, [pc, #60]	; (200000b8 <notmain+0x8c>)
+2000007a:	0289      	lsls	r1, r1, #10
+2000007c:	f7ff ffcc 	bl	20000018 <PUT32>
+20000080:	2180      	movs	r1, #128	; 0x80
+20000082:	480d      	ldr	r0, [pc, #52]	; (200000b8 <notmain+0x8c>)
+20000084:	0509      	lsls	r1, r1, #20
+20000086:	f7ff ffc7 	bl	20000018 <PUT32>
+2000008a:	2108      	movs	r1, #8
+2000008c:	480b      	ldr	r0, [pc, #44]	; (200000bc <notmain+0x90>)
+2000008e:	f7ff ffc3 	bl	20000018 <PUT32>
+20000092:	2400      	movs	r4, #0
+20000094:	4d07      	ldr	r5, [pc, #28]	; (200000b4 <notmain+0x88>)
+20000096:	0020      	movs	r0, r4
+20000098:	3401      	adds	r4, #1
+2000009a:	f7ff ffc5 	bl	20000028 <dummy>
+2000009e:	42ac      	cmp	r4, r5
+200000a0:	d1f9      	bne.n	20000096 <notmain+0x6a>
+200000a2:	e7d2      	b.n	2000004a <notmain+0x1e>
+200000a4:	41004408 	tstmi	r0, r8, lsl #8
+200000a8:	41004488 	smlabbmi	r0, r8, r4, r4
+200000ac:	41004418 	tstmi	r0, r8, lsl r4
+200000b0:	41004498 			; <UNDEFINED> instruction: 0x41004498
+200000b4:	00004e20 	andeq	r4, r0, r0, lsr #28
+200000b8:	41004414 	tstmi	r0, r4, lsl r4
+200000bc:	41004494 			; <UNDEFINED> instruction: 0x41004494
 
 Disassembly of section .ARM.attributes:
 
