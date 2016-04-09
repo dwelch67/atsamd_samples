@@ -1,0 +1,55 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+This program assumes the chip is in a just out of reset state, that no
+other software has configured the peripherals or adjusted clocks, etc.
+
+Not going to be as detailed as blinker01, nor leave binaries or
+intermediate files, use blinker01 and those files to figure out why
+I can build a working program and you cant if you are having problems
+compiling or linking.
+
+The ATSAMD21 is built around a cortex-m0+ core from ARM.  That core
+is ARMv6-M based and has an optional system tick timer (the chip vendor
+when they compile the source code to the core has some options built
+into the source code from ARM to enable or disable some features to
+save space or other reasons).   It appears that for this chip the
+timer is present and working.
+
+There is an 8Mhz internal oscillator in this chip, and upon inspection
+in the system control area, the chip comes out of reset with a divide
+by 8 prescaler.  So that means everything is running at or based off
+of 1MHz.  And this example confirms that by setting the timer to
+time out every 1 million cpu clock cycles, and then then counting 8
+timeouts before changing the state of the leds, they change state
+every 8 seconds.
+
+They OSC8M says it has write protection, but just out of reset it doesnt
+appear that is enabled, still not sure where that is.  But simply
+changing the prescaler we can adjust the speed of the clock.
+
+This example will do three on/off cycles at 16 seconds per cycle, then
+then from there the leds will change state every 1 second.
+
+Remember this is not a crystal oscillator, it is not that accurate.
+The docs say that there is calibration data (meaning each individual
+chip is calibrated) that is loaded for us from flash into the control
+register to give us better accuracy, but expect the frequency to change
+for example with temperature.  If you want something more accurate
+you need an external oscillator, which gets board specific, I may do
+that for one/some boards or may not...will see...
+
+blinker01 uses a variable to count to some big number to delay, this
+uses the timer.  Software is not completely removed from timing, but
+with blinker01, the optimization choices and compiler choice will
+affect the blink rate for the same source code.  Using a timer there
+still is the time from the timer timing out to when the software
+reacts which is compiler and compiler options dependent.  But it is on
+the order of handfuls of clocks at the end of the millions the timer
+waited for.  If you were wanting to do something every 5 or 10 ticks
+of the timer the software is still a major factor in the timing.
+Point being using timers, when done right, increases the accuracy
+of your timing and is not dependent on compiling choices.
+
+
