@@ -25,9 +25,13 @@ time out every 1 million cpu clock cycles, and then then counting 8
 timeouts before changing the state of the leds, they change state
 every 8 seconds.
 
-They OSC8M says it has write protection, but just out of reset it doesnt
-appear that is enabled, still not sure where that is.  But simply
-changing the prescaler we can adjust the speed of the clock.
+They OSC8M says it has write protection, as perhaps all/most of this
+chip.  The PAC Peripheral Access Controller is used to protect writes
+to peripherals.  In the post reset state the PAC register for the SYSCTL
+is set to not write protected, so we dont have to do anything to
+allow us to modify the OSC8M register.
+
+By simply changing the prescaler we can adjust the speed of the clock.
 
 This example will do three on/off cycles at 16 seconds per cycle, then
 then from there the leds will change state every 1 second.
