@@ -207,3 +207,17 @@ family is from a programming perspective.
 The purpose of these examples is to roll your own, not to use a
 vendor supplied generic library.  I am sure there are plenty of examples
 out ther for those libraries.
+
+http://infocenter.arm.com is the starting point for ARM documentation.
+ARM doesnt make chips they make source code for processors that other
+folks put in their chips, like Atmel for this product line.  As far as
+the ARM world goes you want to determine what processor core is used
+hopefully the chip vendors documentation indicates this.  For this chip
+it is a cortex-m0+.  So under Cortex-M series processors on the
+ARM link above.  Expand the cortex-M+ and go to the most recent revision
+login (free to login just have to give up an email address) and get
+the TRM (Technical Reference Manual).  Somewhere in there and/or on the
+web page it tells you the Cortex-M0+ uses the arm architecture ARMv6-M.
+So then you expand the ARM architecture tab and find the ARM ARM (ARM
+Architectural Reference Manual) for the cortex-6m.  In here you will
+find ARM core specific stuff like the systick timer for example.
