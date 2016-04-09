@@ -1,0 +1,209 @@
+
+Although a generic ATSAMD21 directory, starting specifically with
+the
+
+SparkFun SAMD21 Dev Breakout
+https://www.sparkfun.com/products/13672
+
+Which is based on the Atmel ATSAMD21G18, a 32-bit ARM Cortex-M0+
+processor with 256KB flash, 32KB SRAM
+
+Because I use jtag and because of how Atmel is doing things with this
+family, you can use any SAMD21 board, doesnt have to be this sparkfun
+board.
+
+Historically the ARM based microcontrollers from Atmel contained a
+factory bootloader that supported a protocol called SAM-BA (not to
+be confused with the samba package for linux/unix).  A simple
+serial bootloader.  Not completely giving that up, their current
+solution is to use the main flash and provide source for a SAM-BA
+compatible bootloader that you can if you choose place at the
+begining of the flash (where the ARM boots) with some hardware support
+to help protect that region from being erased.  The docs say this is
+not factory programmed.
+
+This board from sparkfun came programmed with something that blinked
+the D13 led.  And implies the PA15 pin (D5 on the board) is used as
+the bootloader strap.  Ground or pull up and it is supposed to go into
+the bootloader which appears to be 115200.  But strapping it either
+way I didnt see the bootloader respond, so I dont know what was really
+on that board.  And really dont care at this point.  If there had been
+a SAM-BA or other documented serial protocol, factory programmed and
+protected, then that would be interesting.  So I am going to start with
+jtag.
+
+I have a number of ST boards that have an stlink frontend on the board
+that you can use as a generic ARM SWD debugger.  There are a
+couple of jumpers you remove to disconnect the stlink from the ST
+mcu.  Now it depends on which stlink you have, or perhaps you have a
+CMSIS-DAP compatible, or some other.  Adafruit has a standalone stlink
+thumb drive looking thing that you can use as well, although actually
+a number of the st mcu boards (nucleos and discovery boards) are cheaper
+than this dongle thing and have a ton more stuff on them (a target
+microcontroller for example).
+
+I also prefer to use openocd as the jtag software, there are other
+solutions, just like there are compilers other than gcc.  But openocd
+is priced right and works well and a lot of folks know how to use it.
+
+git clone git://repo.or.cz/openocd.git
+cd openocd
+./bootstrap
+./configure --enable-stlink
+(keep adding packages until this works, perhaps want the packages to
+get CMSIS-DAP to work in case that is what you have or might get
+some day)
+make
+sudo make install
+
+The particular stm32f4 based NUCLEO board I am using has a connector
+with these pins
+
+VDD_TARGET
+SWCLK
+GND
+SWDIO
+NRST
+SWO
+
+I am only using
+
+VDD_TARGET
+SWCLK
+GND
+SWDIO
+
+No matter what ARM SWD solution you use those are the four minimum
+you will see (techically possible to not need VDD_TARGET, but usually
+they design it to sense rather than assume 3.3V).  VDD_TARGET simply
+means connect to VDD on the target or 3.3V on the sparkfun/samd21 board.
+GND likewise to GND on the samd31 boards ground.  And swclk to swclk
+and swdio to swdio.
+
+In my case lsusb shows
+
+Bus 013 Device 002: ID 0483:374b STMicroelectronics ST-LINK/V2.1 (Nucleo-F103RB)
+
+which matches the stlink-v2-1.cfg file
+
+hla_vid_pid 0x0483 0x374b
+
+these cfg files are taken from openocd.  historically openocd periodically
+changes the config files it uses so they can be a moving target, so I
+prefer to copy/make my own and have less churn.
+
+I have three different stlink interface config files, check the usb
+vid/pid to match with whatever stlink you have if you have an stlink.
+
+So while in the atsamd_samples/ATSAMD21 directory I start openocd with
+
+openocd -f stlink-v2-1.cfg -f atsamd21.cfg
+
+if it works it will for now end with this line
+
+Info : at91samd.cpu: hardware has 4 breakpoints, 2 watchpoints
+
+in another terminal window
+
+telnet localhost 4444
+
+and this ends with
+
+Open On-Chip Debugger
+>
+
+if it works, the openocd server window shows there was a connection
+
+Info : accepting 'telnet' connection on tcp/4444
+
+(some folks like to use gdb or other software to connect to openocd
+I dont do that, no interest, so dont have instructions for that,
+look elsewhere)
+
+In the telnet window you can halt the processor
+
+Open On-Chip Debugger
+> halt
+at91samd.cpu: target state: halted
+target halted due to debug-request, current mode: Handler HardFault
+xPSR: 0x51000003 pc: 0xfffffffe msp: 0xffffffd8
+>
+
+the current mode state was because I had already erased this board
+and the chip boots into an empty flash and faults.
+
+And here is where you are fully committed.  Now if you got this far
+you do have a jtag debugger you can use so you only lose the firmware
+put on your SAMD21 by sparkfun or whomever.
+
+> at91samd chip-erase
+chip erased
+
+And to confirm
+
+> mdw 0 20
+0x00000000: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
+0x00000020: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
+0x00000040: ffffffff ffffffff ffffffff ffffffff
+
+erased.
+
+You can power cycle/reset the board at this point and if needed restart
+the openocd server and telnet into it.  The chip will now be in a known
+state, if you dont then the chip is in the state left by whatever
+firmware you had on it and running these examples may not work the
+same (the clock may be faster for example changing the blink rate
+of the blinker examples).
+
+At this moment I have not solved how to reprogram the flash, you can
+use openocd to download and run programs in flash.  There will be an
+sram version of the examples.  Once I have a flash programming solution
+then there will also be a flash version of the example.
+
+A simple place to get pre-built gnu tools for building these examples
+
+https://launchpad.net/gcc-arm-embedded
+
+or I have my own build scripts that I use to compile a toolchain from
+the gnu sources
+
+https://github.com/dwelch67/build_gcc
+
+To run the blinker01 example using openocd (other examples work the
+same way just a different directory).  In yet another window navigate
+to and build the blinker01.gcc.thumb.sram.elf binary.
+
+I intentionally started openocd in that directory not just because
+the cfg files were there but so that loading can use a path relative
+to that directory
+
+In the telnet window
+
+> halt
+> load_image blinker01/blinker01.gcc.thumb.sram.elf
+144 bytes written at address 0x20000000
+downloaded 144 bytes in 0.015099s (9.314 KiB/s)
+> resume 0x20000000
+
+Once you have typed those three commands you can up arrow three
+times and press enter, repeat three times for each time you recompile
+the binary to retry it.
+
+Start with the blinker examples.
+
+
+
+Schematic and Datasheet
+
+I am specifically using a sparkfun board linked above, at the time of
+this writing that page has both a schematic and the Atmel datasheet
+you need.  The board you are using you would need to get the schematic
+elsewhere.  For the datasheet for the part  go to atmel.com and then
+for this specific part search for it ATSAMD21G18 and get the complete
+datasheet.  These examples are created directly from the datasheet for
+that part.  I have not done the research to see how similar the SAMD21
+family is from a programming perspective.
+
+The purpose of these examples is to roll your own, not to use a
+vendor supplied generic library.  I am sure there are plenty of examples
+out ther for those libraries.

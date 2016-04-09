@@ -1,0 +1,84 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+Being the first example will be more verbose about what is going on.
+Going to check in the intermediate and final binary files for this
+example, not true for other exmaples, sometimes the problem getting
+started with bare metal is getting the tools to behave, there are a
+lot of things that can go wrong and build source code that could work
+in a way that doesnt.
+
+I have a bare metal speech in my raspberry pi repo that covers why
+I use PUT32() and my linker scripts and such.  As well as a bssdata
+thing talking about how I deal with the C bootstrap.
+
+This builds both a flash based example meant to boot the ARM and an
+sram based example that will not boot the ARM, has to be downloaded
+into ram then run.  The difference between them has to do with the
+entry point, one has a vector table that then calls the example the
+other has code that simply calls the example. (flash.s vs sram.s)
+Otherwise blinker01.c is used for both, and is the real example.
+
+This example assumes you have either erased the flash so that it
+boots into an empty flash, or this example is programmed at the
+beginning of flash and the processor boots into this example.  Basically
+this program assumes the chip is in a post-reset state.
+
+The sparkfun board I am using has three easy to get at leds.  One
+is labelled 13 and is tied to the same port as the D13 pin.  The other
+two are labelled TX and RX.  These are tied to pins PA17, PA27, and
+PB03.
+
+Since mcus are often used in low power designs, it is not unusual for
+the logic to have clock enables for the various peripherals.  Sometimes
+they come out of reset enabled sometimes you have to go and enable
+them so the first step is to figure that out.
+
+The general purpose I/O pins are part of the PORT peripheral and
+there appears to be a single clock enable for all of the ports (some
+chip vendors have separate enables for PORT A vs PORT B and so on).
+
+The APBB Mask register shows that the PORT perhipheral clocks are
+enabled post-reset so we dont have to do anything to enable these
+I/O pins.
+
+The Product Mapping picture shows that the PORT peripheral starts at
+address 0x41004400.  Not necessarily obvious but the PORT A registers
+start at 0x41004400, PORT B start at 0x41004480.
+
+The PORT Peripheral Multiplexing n register shows/implies that the
+ports come out of reset with Peripheral function A selected which is
+generic I/O.  So another thing we should not have to touch.
+
+The documentation says/shows the pins come out of reset configured
+as inputs.   We need the pin or pins we want to blink the leds with
+to be outputs.  There is a DIRection register for that, and to make
+things easier there is a DIRSET register that we can use to change
+the direction state of one/some of the port pins without having to
+do a read-modify-write of the DIR register.
+
+Likewise there is an OUT register that affects all the pins for a port
+and an OUTSET and OUTCLR register that makes it easy to change the
+state of one or more pins without having to read-modify-write the OUT
+register.
+
+So I/O on this part is super simple, we set the pins we want to be
+outputs using the DIRSET registers, then to change the output state
+we use OUTSET or OUTCLR.  Interesting that the designers of this board
+chose to make the D13 led work one way and the TX and RX work the other
+one way it sources the other it sinks.  So setting an output high will
+make the D13 turn on, and making the output zero or ground will make
+the TX and RX leds turn on.
+
+Using the dummy function in this way is just a simple trick to get
+around the optimizer.  I am basically forcing the compiler to create
+code that counts to 20000 which burns just enough time for our eyes
+to see the led go on and off.  With no other software running before
+this to change the clocks the leds with this example blink at faster
+than once a second.  If you change one of the 20000 constants and
+recompile and rerun, you can affect the blink rate.  We should not
+try to make any connection between the count in the delay loop and
+the time the led is on or off.  This can/will vary based on the
+compiler and/or version you are using, later examples will use timers
+to control the blink rate independent of the compiler.
