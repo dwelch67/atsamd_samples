@@ -44,6 +44,7 @@ int delay ( unsigned int n )
 int notmain ( void )
 {
     unsigned int ra;
+    unsigned int rb;
 
 if(1)
 {
@@ -81,7 +82,9 @@ if(1)
     ra&=~(3<<8);
     PUT32(OSC8M,ra);
 
-    while(1)
+if(1)
+{
+    for(ra=0;ra<7;ra++)
     {
         PUT32(PORTAOUTSET,1<<17);
         PUT32(PORTAOUTSET,1<<27);
@@ -91,6 +94,35 @@ if(1)
         PUT32(PORTAOUTCLR,1<<27);
         PUT32(PORTBOUTCLR,1<<3);
         delay(8);
+    }
+}
+
+    PUT32(STK_CSR,4);
+    PUT32(STK_RVR,0x00FFFFFF);
+    PUT32(STK_CVR,0x00000000);
+    PUT32(STK_CSR,5);
+
+    rb=GET32(STK_CVR);
+    while(1)
+    {
+        PUT32(PORTAOUTSET,1<<17);
+        PUT32(PORTAOUTSET,1<<27);
+        PUT32(PORTBOUTSET,1<<3);
+        while(1)
+        {
+            ra=GET32(STK_CVR);
+            if(((rb-ra)&STK_MASK)>=1234567) break;
+        }
+        rb=ra;
+        PUT32(PORTAOUTCLR,1<<17);
+        PUT32(PORTAOUTCLR,1<<27);
+        PUT32(PORTBOUTCLR,1<<3);
+        while(1)
+        {
+            ra=GET32(STK_CVR);
+            if(((rb-ra)&STK_MASK)>=1234567) break;
+        }
+        rb=ra;
     }
 
     return(0);

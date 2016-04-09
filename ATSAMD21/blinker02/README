@@ -34,7 +34,21 @@ allow us to modify the OSC8M register.
 By simply changing the prescaler we can adjust the speed of the clock.
 
 This example will do three on/off cycles at 16 seconds per cycle, then
-then from there the leds will change state every 1 second.
+then 7 on/off cycles at 2 seconds per cycle.  Then I have some
+code that shows another way to use a timer that wraps around.  By
+changing the load value to all ones (this is a 24 bit timer) it counts
+from 0xFFFFFF to 0x000000 and then "wraps around" to 0xFFFFFF which
+means it counts forever.  I know it is a down counter because the ARM
+docs said that, you have to check some timers are up some are down
+some you can configure to be up or down.  So long as you dont wait
+longer than a single wrap around (with some margin) you can simply
+compare the difference between reading the timer one time and then
+reading it later to see how much time has elapsed.  The last loop
+demonstrates this.  And is the most generic as you often find a timer
+can be setup to wrap around and you dont have to get into the details
+of that specific timer to figure out how to check that it has finished
+counting, how to re-arm it, etc.  Any wraparound timer you can just
+read it once then read it again and subtract (and mask).
 
 Remember this is not a crystal oscillator, it is not that accurate.
 The docs say that there is calibration data (meaning each individual
