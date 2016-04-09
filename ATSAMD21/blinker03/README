@@ -1,0 +1,143 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+This program assumes the chip is in a just out of reset state, that no
+other software has configured the peripherals or adjusted clocks, etc.
+
+So this is a bit more complicated than blinker02.  This example uses
+TC4 one of the timers in this chip.  blinker02 used a timer built
+into the ARM core that runs off the same clock the ARM core sees and
+is ready to go.
+
+We know from blinker02 and from the reset state of registers that we
+are running off of the internal 8MHZ clock OSC8M.  And out of reset
+there is a divide by 8 applied to that clock, so we see 1MHz if we dont
+touch it after coming out of reset.
+
+There is a block called GCLK which is where we can pick and choose
+what clocks go to what.  How they decided to do it is they have 8
+generic clock generators.  And then for each peripheral you decide
+which clock generator you want to select.  So you could assign the
+internal OSC8M clock we are using to one of the clock generators and
+then select that for one of the UARTS.  At the same time you could
+assign an external oscillator to a different clock generator and use
+that to drive a timer.
+
+I was liking this chip a lot until I saw how all this works.  I dont
+normally see this in designs, have not seen it in decades.  They put
+the burden on software, at least they made it so we can poll something.
+
+Anyway.  How these folks did this is you have a peripheral, say this
+timer.  There is logic involved with reading and writing registers
+that logic and the clock for that logic is driven by GCLKGEN 0 or
+the generic clock generator 0 which is special because it drives
+GCLK_MAIN which goes to the PM which feeds the system (the CPU I assume
+too).  So far the PORT peripheral we drive the leds with is already
+enabled in the PM we didnt need to mess with that.  For TC4 we do
+need to go to the PM and enable clocks to TC4.  But this only enables
+the main clock that drives the logic that lets us access the registers
+from the cpu.  The actual timer logic that counts to some number and
+does this and that with it, that is driven off of a peripheral clock.
+Which is how most designs work...BUT...Obviously if you have part of
+the logic running in one clock domain and part running in another any
+connection between those logic blocks has a synchronization issue.
+Normally these days they take care of us, they deal with it the counters
+run off the clock we asked, for and when we do a read of a register
+it is all managed.
+
+This design, we have to do some of the syncronization in software.  Think
+of it this way, we, the cpu/program are running at one speed we make
+decisions at a rate based on one clock.  But we are talking to some
+other logic that is running off of another clock and is making its
+decisions based on that clock.  Lets say they are running off a clock
+that is 4.3 times slower.  When we write a control register, we do
+that at our speed, but there is a logic bridge between our clock
+domain and the perhipherals logic clock domain.  Depending on when
+their next clock is it can take up to 4.3 of our clocks before they
+see that write.  And if we want them to see that write we have to wait
+for them to see it before we try to ask them to do something else.
+So they helped us a little, it varies for each of the peripherals and
+what in the peripheral you are accessing, and they document what the
+synchronization rules are for the registers in that peripheral.  But
+in general we initiate a read or write, logic in our clock domain
+asserts a busy signal, which we can poll in a status register.  When
+the other side sees our transaction, it sends a signal back to say
+I got it, and our busy signal goes away, and we can see that when polling.
+
+So for each of these registers that requires synchronization, we have
+to wait for the transaction to complete before doing something else.
+
+Now one could argue that if both sides are using the same clock, or if
+the peripheral is using a faster clock then before we can do the next
+thing they have seen our request and completed it and we really shouldnt
+need to poll.  But it is still a good idea in general.
+
+For this peripheral there is a single sync bit, some of the others in
+this chip have different bits for different parts of the peripheral.
+You can get a little bit of software performance gain with a single busy
+bit by polling BEFORE you talk to a register.  When you have different
+bits for different things you may want/need to wait AFTER.
+
+My timeline may look like this
+
+Axxx---Bxxx---Cxxx---
+
+Where xxx is the busy time.  If I wait after performing A for the
+busy to finish before doing anything else even if that something
+else is not something that has to wait for the busy, then I lose that
+time that I might have been able to do something else.
+
+If instead of waiting after I look at the busy bit just before B then
+in the situation above I could have had all of that time to do other
+things rather than half the time, I could have gotten more stuff done.
+
+I started the code that way but have moved the waits until after since
+I want to treat this chip generically in my mind and do everything one
+way.
+
+So where are we, we need to setup a generic clock generator.  The
+documentation shows us that GCLKGEN0 comes up set to OSC8M and is
+enabled.  But to experience this lets use GCLKGEN5.  So we use the
+GENCTRL register to enable and assign OSC8M to GCLKGEN5.  And to select
+GCLKGEN5 for the TC4 timer we use the CLKCTRL register.  There
+is a table in the register description for the ID.  0x1B is used for
+both TC4 and TC5, something to note that you cant separate those
+to, a number of those work that way and I suspect it is for when you are
+combining two timers together for 32 bit timing.  Not doing that
+here but something to understand.
+
+Now both clock domains we need are being fed with clocks we can
+setup the timer.  I am using it in a super simple mode of counting up
+to the max value and rolling over, which means you just turn the
+enable bit on.  The other thing I am doing is using a prescaler.
+The mode selected is a 16 bit mode.  So we can only count to 65536
+of whatever clock is feeding that timer.  We lose resolution but with
+a prescaler we roll over less often.  I have chosen the max divisor
+of 1024.
+
+Some timers like the systick timer in blinker02 you need to set the
+rollover point for counting up or the load value for counting down.
+The mode we are using, some of the CTRLA bits, use the maximum
+value for a 16 or 32 bit counter, so in our case that is 0xFFFF we dont
+need to mess with the CC register(s), they are not used for this
+example.
+
+Because it is a timer that counts from 0 to 0xFFFF and then rolls over
+to 0x0000, I can for waiting periods of time that are powers of 2,
+just look at one bit in the timer and watch it change between a 0 and
+1 and back for that amount of time to elapse.
+
+Starting with blinker03 am going to just run at 8Mhz by changing the
+OSC8M prescaler to divide by 1.
+
+So we have OSC8M being the source of GCLKGEN5, we have selected GCLKGEN5
+as our clock source for TC4.  So TC4 is getting 8MHz as its source.
+That clock is being divide by 1024.  So the timer is going to run off
+of 8000000/1024 = 7812.5Hz.  The delay bit code watches bit 0x1000
+which basically takes 4096 counts to change.  We wait for it to change
+twice or 8192 clocks.   8192/7812.5 = 1.048576 seconds.  We see the
+leds change state a little slower than a second.
+
+If you were to change delay_bit(1) to a much larger number like 100
+the it should take 104.8 seconds to change state.
