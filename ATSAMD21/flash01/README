@@ -1,0 +1,45 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+This program assumes the chip is in a just out of reset state, that no
+other software has configured the peripherals or adjusted clocks, etc.
+
+
+Looks like pages are 64 bytes for the various flash sizes.
+
+From the datasheet
+
+The NVM is organized into rows, where each row contains four pages, as
+shown in Figure 21-2. The NVM has a row-erase granularity, while the
+write granularity is by page. In other words, a single row erase will
+erase all four pages in the row, while four write operations are used
+to write the complete row.
+
+The smallest part is 32Kbytes or 512 pages or 128 rows, so only
+erasing that much.
+
+The PARAM register actually gives you the page size and number of
+pages.
+
+They made this super easy to manage the flash.  This program erases
+some amount of flash up front.  And then programs the flash-bin file.
+
+Being generic, the smallest amount of ram listed for one of these
+samd21 parts is 4Kbytes, so limiting the flash-bin and this program
+to fit in that 4Kbytes.
+
+Copy one of the flash.bin files from another example or your program
+to flash-bin.  For example the flash.bin version of blinker01.
+
+If everything works then when you press reset it will run your program.
+Hopefully you dont brick your chip, not my fault if you do.
+
+change the if(1) to an if(0) to just erase and not write.
+
+The assumption is this program is run in sram and had been loaded via
+jtag, if using openocd you already have this command to erase all
+of the flash.
+
+at91samd chip-erase
+
