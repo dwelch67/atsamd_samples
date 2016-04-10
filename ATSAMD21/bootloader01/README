@@ -1,0 +1,58 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+This program assumes the chip is in a just out of reset state, that no
+other software has configured the peripherals or adjusted clocks, etc.
+
+derived from uart02.
+
+This sparkfun board has a couple of TX/RX pins called out
+
+The ones next to the SWCLK/SWDIO
+
+TX PB22  SERCOM5 PAD[2] PORT FUNCTION D
+RX PB23  SERCOM5 PAD[3] PORT FUNCTION D
+
+The arduino ones in the corner
+
+TX PA10  SERCOM0 PAD[2] PORT FUNCTION C
+RX PA11  SERCOM0 PAD[3] PORT FUNCTION C
+
+This example defaults to SERCOM5 the PB22/PB23 pins.  Set a define
+in the code to swich to SERCOM0.
+
+I normally aim low so that one example works in more places, but since
+this bootloader loads code into ram, and to maximize the size of the
+program that can be loaded, I have set the stack top to the top of ram
+for the part I am using right now which has 32KBytes of ram.  You
+would need to adjust this (in flash.s).
+
+stacktop: .word 0x20008000
+
+There is no .bss nor .data so only the stack uses ram in the bootloader
+
+This bootloader launches at 0x20000000 when you press g to go, even
+if there is an entry value in the intel hex file.
+
+This bootloader accepts intel hex data downloaded into the terminal
+with minicom for example use the ascii download option.  ctrl-a then s
+then up arrow to select ascii
+
+Once the program in intel hex format has downloaded, then enter/send
+the character g (as in go) and it will branch to 0x20000000.
+
+What this allows basically is that you can use jtag and the flash01
+example with this binary (flash.bin version) or use a jtag tool if
+it supports directly programming this part, to load the bootloader into
+flash, and from there you can do a lot of things without needing the
+jtag, simply a terminal and uart.
+
+There is a feature in case you want to use the flash but keep this
+bootloader in place (as I might), instead of downloading and running
+a program with g, just enter z and it will branch to 0x00001000 which
+you would have needed to program by some means (a derivative of flash01
+for example).
+
+
+
