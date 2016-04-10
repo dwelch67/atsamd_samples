@@ -54,5 +54,9 @@ a program with g, just enter z and it will branch to 0x00001000 which
 you would have needed to program by some means (a derivative of flash01
 for example).
 
-
+Yes.  Perhaps this board when I bought it, although it didnt seem to work
+and other boards that you buy may already have a SAM-BA based bootloader
+loaded into the beginning of flash.  And it does these things and more
+or you can make an xmodem based loader, which is another personal
+favorite, or roll your own.
 
