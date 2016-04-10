@@ -1,0 +1,38 @@
+
+See the previous level README for schematic and programmers reference
+information and how to run these programs.
+
+This program assumes the chip is in a just out of reset state, that no
+other software has configured the peripherals or adjusted clocks, etc.
+
+See blinker03 about syncbusy.  I am overdoing it in this example, not
+hurting anything, costs a few clocks during init.
+
+This sparkfun board has a couple of TX/RX pins called out
+
+The ones next to the SWCLK/SWDIO
+
+TX PB22   SERCOM5 PAD[2] PORT FUNCTION D
+RX PB23   SERCOM5 PAD[3] PORT FUNCTION D
+
+The arduino ones in the corner
+
+TX PA10  SERCOM0 PAD[2] FUNCTION C  SERCOM2 PAD[2]  FUNCTION D
+RX PA11  SERCOM0 PAD[3] FUNCTION C  SERCOM2 PAD[3]  FUNCTION D
+
+The TXPO setting threw me off for a while.  RXPO the pad number is
+what you put in the field.  But for TXPO if you do that for these
+cases and put 2 there you get flow control, which means you need
+to expose more pads, and feed the CTS.  PAD[2] with no flow control
+is a TXPO of 1.
+
+The math for the baud is a little unusual
+
+BAUD = 65536 ( 1 - (16 (115200/8000000)))
+BAUD = 65536 ( 1 - (16 (0.0144)))
+BAUD = 65536 ( 1 - 0.2304)
+BAUD = 65536 ( 0.7696)
+BAUD = 50436.5056
+
+This example writes U then V out both PB22 and PA10.
+
