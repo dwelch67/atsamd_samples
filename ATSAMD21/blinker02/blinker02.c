@@ -3,16 +3,15 @@ void PUT32 ( unsigned int, unsigned int );
 unsigned int GET32 ( unsigned int );
 void dummy ( unsigned int );
 
-#define PORTBASE 0x41004400
+#define PORT_BASE 0x41004400
 
-#define PORTADIRSET (PORTBASE+0x08)
-#define PORTAOUTCLR (PORTBASE+0x14)
-#define PORTAOUTSET (PORTBASE+0x18)
+#define PORTA_DIRSET (PORT_BASE+0x08)
+#define PORTA_OUTCLR (PORT_BASE+0x14)
+#define PORTA_OUTSET (PORT_BASE+0x18)
 
-#define PORTBDIRSET (PORTBASE+0x88)
-#define PORTBOUTCLR (PORTBASE+0x94)
-#define PORTBOUTSET (PORTBASE+0x98)
-
+#define PORTB_DIRSET (PORT_BASE+0x88)
+#define PORTB_OUTCLR (PORT_BASE+0x94)
+#define PORTB_OUTSET (PORT_BASE+0x98)
 
 #define STK_CSR 0xE000E010
 #define STK_RVR 0xE000E014
@@ -20,11 +19,9 @@ void dummy ( unsigned int );
 #define STK_MASK 0x00FFFFFF
 
 #define SYSCTRL 0x40000800
-
 #define OSC8M (SYSCTRL+0x20)
 
-
-int delay ( unsigned int n )
+static int delay ( unsigned int n )
 {
     unsigned int ra;
 
@@ -39,8 +36,6 @@ int delay ( unsigned int n )
     return(0);
 }
 
-
-
 int notmain ( void )
 {
     unsigned int ra;
@@ -54,9 +49,9 @@ if(1)
     PUT32(OSC8M,ra);
 }
 
-    PUT32(PORTADIRSET,1<<17);
-    PUT32(PORTADIRSET,1<<27);
-    PUT32(PORTBDIRSET,1<<3);
+    PUT32(PORTA_DIRSET,1<<17);
+    PUT32(PORTA_DIRSET,1<<27);
+    PUT32(PORTB_DIRSET,1<<3);
 
     PUT32(STK_CSR,4);
     PUT32(STK_RVR,1000000-1);
@@ -67,13 +62,13 @@ if(1)
 {
     for(ra=0;ra<3;ra++)
     {
-        PUT32(PORTAOUTSET,1<<17);
-        PUT32(PORTAOUTSET,1<<27);
-        PUT32(PORTBOUTSET,1<<3);
+        PUT32(PORTA_OUTSET,1<<17);
+        PUT32(PORTA_OUTSET,1<<27);
+        PUT32(PORTB_OUTSET,1<<3);
         delay(8);
-        PUT32(PORTAOUTCLR,1<<17);
-        PUT32(PORTAOUTCLR,1<<27);
-        PUT32(PORTBOUTCLR,1<<3);
+        PUT32(PORTA_OUTCLR,1<<17);
+        PUT32(PORTA_OUTCLR,1<<27);
+        PUT32(PORTB_OUTCLR,1<<3);
         delay(8);
     }
 }
@@ -86,13 +81,13 @@ if(1)
 {
     for(ra=0;ra<7;ra++)
     {
-        PUT32(PORTAOUTSET,1<<17);
-        PUT32(PORTAOUTSET,1<<27);
-        PUT32(PORTBOUTSET,1<<3);
+        PUT32(PORTA_OUTSET,1<<17);
+        PUT32(PORTA_OUTSET,1<<27);
+        PUT32(PORTB_OUTSET,1<<3);
         delay(8);
-        PUT32(PORTAOUTCLR,1<<17);
-        PUT32(PORTAOUTCLR,1<<27);
-        PUT32(PORTBOUTCLR,1<<3);
+        PUT32(PORTA_OUTCLR,1<<17);
+        PUT32(PORTA_OUTCLR,1<<27);
+        PUT32(PORTB_OUTCLR,1<<3);
         delay(8);
     }
 }
@@ -105,18 +100,18 @@ if(1)
     rb=GET32(STK_CVR);
     while(1)
     {
-        PUT32(PORTAOUTSET,1<<17);
-        PUT32(PORTAOUTSET,1<<27);
-        PUT32(PORTBOUTSET,1<<3);
+        PUT32(PORTA_OUTSET,1<<17);
+        PUT32(PORTA_OUTSET,1<<27);
+        PUT32(PORTB_OUTSET,1<<3);
         while(1)
         {
             ra=GET32(STK_CVR);
             if(((rb-ra)&STK_MASK)>=1234567) break;
         }
         rb=ra;
-        PUT32(PORTAOUTCLR,1<<17);
-        PUT32(PORTAOUTCLR,1<<27);
-        PUT32(PORTBOUTCLR,1<<3);
+        PUT32(PORTA_OUTCLR,1<<17);
+        PUT32(PORTA_OUTCLR,1<<27);
+        PUT32(PORTB_OUTCLR,1<<3);
         while(1)
         {
             ra=GET32(STK_CVR);
