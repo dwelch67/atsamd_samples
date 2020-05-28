@@ -1,0 +1,7 @@
+
+Experimentally determined startup clock (feeding systick) appears to
+be around 1MHz.  Confirmed in documentation that the startup clock is
+OSC8M divided by 8.
+
+Change the divisor to 1 making it 8MHz/1 = 8MHz.
+
